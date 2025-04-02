@@ -1,65 +1,115 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { ARButton } from 'three/examples/jsm/webxr/ARButton.js';
-import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
+import { AfterViewInit, Component, CUSTOM_ELEMENTS_SCHEMA, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { WebxrArComponent } from '../webxr-ar/webxr-ar.component';
 
 @Component({
   selector: 'app-ar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [
+    CommonModule
+  ],
+  schemas: [
+    CUSTOM_ELEMENTS_SCHEMA
+  ],
   templateUrl: './ar.component.html',
   styleUrl: './ar.component.css'
 })
-export class ArComponent implements AfterViewInit {
-  @ViewChild('arContainer', { static: true }) arContainer!: ElementRef;
-  scene!: THREE.Scene;
-  camera!: THREE.PerspectiveCamera;
-  renderer!: THREE.WebGLRenderer;
-  loader!: GLTFLoader;
+export class ArComponent implements AfterViewInit, OnInit {
+  @ViewChild('viewer', { static: false }) viewer!: ElementRef;
+  @ViewChild('audioElement', { static: false }) audio!: ElementRef;
+
+  audioEnabled = false; // Para saber si el usuario activó el audio
+  deviceOS: string = '';
+
+  ngOnInit(): void {
+    this.detectDeviceOS();
+  }
 
   ngAfterViewInit() {
-    this.initScene();
-    this.addARButton();
-    this.loadModel();
+
+    
+    
+    if(this.viewer && this.audio) {
+      const modelViewer = this.viewer.nativeElement;
+      const audioElement = this.audio.nativeElement;
+
+      modelViewer.addEventListener('load', () => {
+        console.log('Modelo cargado');
+        modelViewer.animationName = modelViewer.availableAnimations[0] || ''; // Selecciona la primera animación disponible
+        modelViewer.play();
+      });
+  
+      modelViewer.addEventListener('click', () => {
+        console.log('Modelo clickeado');
+        modelViewer.play();
+      });
+      
+      // Detecta cuándo entra y sale del modo AR
+      modelViewer.addEventListener('ar-status', (event: any) => {
+        if (event.detail.status === 'session-started' && this.audioEnabled) {
+          // Reproducir el audio solo si el usuario ya lo ha habilitado
+          this.playAudio();
+        } else if (event.detail.status === 'not-presenting') {
+          // Pausar el audio cuando el AR se detiene
+          audioElement.pause();
+        }
+      });
+
+      // Forzar la animación si no se inicia sola
+      setTimeout(() => {
+        modelViewer.play();
+      }, 500);
+    }
+
+    
   }
 
-  initScene() {
-    this.scene = new THREE.Scene();
-    this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
-    this.camera.position.set(0, 1.5, 3); // Ajusta la posición de la cámara
+  // Se activa el audio con un clic del usuario
+  playAudio() {
+    const audioElement = this.audio.nativeElement;
 
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.xr.enabled = true;
-    this.arContainer.nativeElement.appendChild(this.renderer.domElement);
-
-    const light = new THREE.HemisphereLight(0xffffff, 0xbbbbff, 1);
-    this.scene.add(light);
+    // En iOS, podemos necesitar un pequeño retraso para asegurar que se haya producido la interacción
+    setTimeout(() => {
+      if (audioElement.paused) {
+        audioElement.play();
+        this.audioEnabled = true;
+      }
+    }, 100); // Retardo de 100ms para asegurar la interacción
   }
 
-  addARButton() {
-    const arButton = ARButton.createButton(this.renderer, {
-      requiredFeatures: ['hit-test'], // Detecta superficies en AR
-    });
-    document.body.appendChild(arButton);
+  onARStatus(event: any) {
+    const status = event.detail.status;  
+    if (status === 'session-started' && this.audioEnabled) {
+      const audioElement = this.audio.nativeElement;
+      if (audioElement) {
+        audioElement.play().catch((error: any) => {
+          console.error('Error al reproducir el audio:', error);
+          // Mostrar un mensaje de error al usuario
+          alert('No se pudo reproducir el audio. Por favor, inténtalo de nuevo.');
+        });
+      }
+    }
   }
 
-
-
-  loadModel() {
-    const objLoader = new OBJLoader();
-    objLoader.load('./test.obj', (object) => {
-      object.scale.set(1, 1, 1); // Ajusta el tamaño real del modelo
-      this.scene.add(object);
-      this.animate();
-    });
-  }
-
-  animate() {
-    this.renderer.setAnimationLoop(() => {
-      this.renderer.render(this.scene, this.camera);
-    });
+  detectDeviceOS() {
+    if (typeof navigator !== 'undefined') {
+      const userAgent = navigator.userAgent;
+  
+      if (/android/i.test(userAgent)) {
+        this.deviceOS = 'Android';
+      } else if (/iPad|iPhone|iPod/i.test(userAgent)) {
+        this.deviceOS = 'iOS';
+        window.location.href = 'https://teamdeveloperinnovatechvr.github.io/HuevosKike/';
+      } else if (/Windows NT/i.test(userAgent)) {
+        this.deviceOS = 'Windows';
+      } else {
+        this.deviceOS = 'Unknown';
+      }
+  
+      console.log('Sistema operativo detectado:', this.deviceOS);
+    } else {
+      console.log('navigator no está disponible en este entorno.');
+      this.deviceOS = 'Unknown';
+    }
   }
 }

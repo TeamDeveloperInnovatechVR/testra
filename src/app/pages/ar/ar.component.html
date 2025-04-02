@@ -1,1 +1,54 @@
-<div #arContainer></div>
+<nav class="navbar navbar-expand-lg bg-body-tertiary">
+  <div class="container-fluid align-items-center justify-content-center">
+    <img src="./LOGO-KIKES.avif" alt="Ambiente consultores">
+  </div>
+</nav>
+
+
+<div
+  class="container"
+>
+  <div
+    class="row justify-content-center align-items-center g-2"
+  >
+    <div class="col-12">
+      
+    </div>
+    <div class="col-12">
+      <p class="text-justify my-2 px-3">
+        Para activar la Realidad Aumentada (RA), toca el botón del cubo en la esquina inferior derecha del visor. 
+        Luego, sigue las instrucciones en pantalla para colocar el modelo en tu entorno.
+      </p>
+      <model-viewer
+        #viewer
+        src="./Jorge_Rausch_animated.glb"
+        ios-src="./Jorge_Rausch_animated.usdz"
+        alt="A 3D model"
+        ar
+        auto-rotate
+        camera-controls
+        (ar-status)="onARStatus($event)"
+        ar-modes="webxr scene-viewer quick-look"
+        autoplay
+        animation-name="Jorge_Rausch_Kikes_Clip"
+        tone-mapping="neutral"
+        shadow-intensity="1"
+      >
+      <button
+        slot="hotspot"
+        data-position="0 0 0"
+        data-normal="0 1 0"
+        type="button" 
+        class="btn btn-secondary"
+        (click)="playAudio()"
+      >
+        🔊 Activar Sonido
+      </button>
+      </model-viewer>
+      
+    </div>
+  </div>
+  
+</div>
+<audio #audioElement src="./audio_Rausch_edit_2.mp3" preload="auto"></audio>
+
