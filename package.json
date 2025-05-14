@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --port 4200",
-    "build": "ng build",
+    "build": "ng build --base-href='/URLMOODLE/'",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:test-ra": "node dist/test-ra/server/server.mjs"
