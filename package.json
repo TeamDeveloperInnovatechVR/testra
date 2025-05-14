@@ -4,7 +4,7 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve --host 0.0.0.0 --port 4200",
-    "build": "ng build --base-href='/master.d13uarp6krboi7.amplifyapp.com/'",
+    "build": "ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "serve:ssr:test-ra": "node dist/test-ra/server/server.mjs"
